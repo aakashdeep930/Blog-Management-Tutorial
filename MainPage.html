@@ -5,7 +5,7 @@
      <meta charset="UTF-8">
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script> 
     
     <!-- Bootstrap Link-->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
@@ -75,15 +75,18 @@
             <div class="container" id="container">
                  <!-- Blog Starts Here -->
                  <div class="jumbotron bg-dark" style="margin-top: 15px">
+                    <script>
+                        var counter=0;
+                    </script>
                      <div class="container text-center">
                          <form id="main-form">
                              <div class="form-group">
                                  <textarea type="text" rows="5" placeholder="Description..." class="form-control" id="main-desc"></textarea>
-                                <div class="invalid-feedback">
+                                 <div class="invalid-feedback">
                                     Please write some decription first
-                                </div>
-                             </div>       
-                             <div  class="form-group"> 
+                                 </div>
+                             </div>          
+                             <div class="form-group"> 
                                 <input type="file" class="form-control" id="main-image"/>
                                 <div class="invalid-feedback">
                                      Please choose a valid image
@@ -115,6 +118,7 @@
                 <div class="text-center bg-light text-dark">
                      <h3>All New Blogs</h3>
                 </div>
+
                  <hr>
                  <br>
 
@@ -131,55 +135,170 @@
                  <!-- Validation and uploading of Post Blog-->
                  
                  <script>
-                      var validImagetypes =  ["image\gif", "image\jpeg" ,"image\png"];
+                      var validImagetypes =  ["image/gif", "image/jpeg" ,"image/png", "image/jpg"];
                      
-                      function previewImage(image_blog)
-                      {
-                          var reader = new FileReader();
+                      $("#selected-image").hide();
 
-                          reader.onload = function(e)
-                          {
-                              $("selected-image").attr('src',e.target.result);
-                              $("selected-image").fadeIn();
-                          }
-                          reader.readAsDataURL(image_blog.files[0]);
-                          $("#selected-image").show();
-                      }
+                         function previewImage(image_blog)
+                        {
+                            if(image_blog.files && image_blog.files[0]) 
+                           {
+                              var reader = new FileReader();
 
-                      $("main-image").change(function()
+                              reader.onload = function(e)
+                             {
+                               $("#selected-image").attr('src',e.target.result);
+                               $("#selected-image").fadeIn();
+                             }  
+                            // console.log(hi);
+                            // console.log(reader.readAsDataURL(image_blog.files[0]));    
+                             reader.readAsDataURL(image_blog.files[0]);
+                             $("#selected-image").show();
+                           }
+                        }
+
+                      $("#main-image").change(function()
                       {
                             previewImage(this);
                       });
 
 
                       //On Submitting Post
-                      $("save-blog").click(function()
+                      $("#save-blog").click(function()
                       {
-                         $("#main-desc").removeClass("is-invalid");
+                         $("#main-desc").removeClass("is-invalid");  ///Checking validity
                          $("#main-image").removeClass("is-invalid");
                          
                          var desc = $("#main-desc").val();
                          var picture = $("#main-image").prop("files")[0];
 
+                        //Description is not written
                         if(!desc)
                         {
                             $("#main-desc").addClass("is-invalid");
-                            return;
+                            return; 
                         }
-
+                         
+                        //Picture Not uploaded
                         if(picture == null)
                         {
                             $("#main-image").addClass("is-invalid");
                             return ;
                         }
 
+                        //Picture type is valid
                         if($.inArray(picture["type"],validImagetypes)<0)
                         {
                             $("#main-image").addClass("is-invalid");
                             return ; 
                         }
 
+                        //***************Upload and save to firebase storage and database
+                
+                            var databaseRef = firebase.database().ref().child("Blogs");  //New Node
+
+                            databaseRef.once("value").then(function(snapshot)
+                            {
+                                var name = picture["name"];
+                                var dateStr = new Date().getTime();
+                                var fileCompleteName = name + "_" + dateStr;   //Distingushed filenames
+
+                                var storageRef = firebase.storage().ref().child("Blog Images");  //New Node in Storage
+                                var blogStorageRef = storageRef.child(fileCompleteName);  //New Child Node with filename
+
+                                var uploadTask = blogStorageRef.put(picture);
+
+                                //Now image is uploaded to firebase storage
+                                
+                                uploadTask.on("state_changed",
+
+                                     function progress(snapshot)
+                                     {
+                                         var percentage = (snapshot.bytesTransferred / snapshot.totalBytes)*100;
+                                          
+                                         $("#upload-progress").html(Math.round(percentage) + "%");
+                                         $("#upload-progress").attr("style", "width:" + percentage + "%");
+                                     },
+
+                                     function error(err)
+                                     {
+
+                                     },
+
+                                     function complete()
+                                     {
+                                         var user = firebase.auth().currentUser;
+                                         var userName;
+
+                                        //Find complete username
+                                         firebase.database().ref('Users/' + user.uid).once('value').then(function(snapshot)
+                                         {
+                                              var fName = (snapshot.val() && snapshot.val().firstName);
+                                              var sName = (snapshot.val() && snapshot.val().secondName);
+
+                                              userName = fName + " " + sName;
+                                         });
+
+
+                                         uploadTask.snapshot.ref.getDownloadURL().then(function(downloadUrl)
+                                         {
+                                            var time = new Date();
+
+                                            var options = 
+                                            {
+                                               weekday: "long",
+                                               month: "long",
+                                               day: "2-digit",
+                                               year: "numeric",
+                                            };
+                                             
+                                            var blogData = 
+                                            {
+                                                "image": downloadUrl,
+                                                "name": fileCompleteName,
+                                                "desc": desc,
+                                                "uid": user.uid,
+                                                "name": userName,
+                                                "time": time.toLocaleString('en-US',{hour: 'numeric', minute: 'numeric', hour12: true}),
+                                                "date": time.toLocaleDateString('en-US',options),
+                                            }; 
+                                        
+                                            var newPostRef = databaseRef.push();
+
+                                             newPostRef.set(blogData, function(err)
+                                             {
+                                                if(err)
+                                                {
+                                                    $("#result").attr("class","alert alert-danger");
+                                                    $("#result").html(err.message);
+                                                }
+                                                else
+                                                {
+                                                    $("#result").attr("class","alert alert-success");
+                                                    $("#result").html("blog has been uploaded successfully");
+
+                                                    window.open("","_self");
+                                                }
+                                             });
+
+                                         });
+                                     }
+                                );
+
+                            });
+                            
+
+                        //****************Upload and save to firebase storge and database ends
+
                       });
+                      
+                      function resetForm()
+                      {
+                          $("#main-form")[0].reset();
+                          $("#selected-image").fadeOut();
+                          $("#upload-progress").html("Completed");
+                      }
+                 
                  </script>
 
                   <!-- Validation and uploading of Post Blog Ends Here-->
