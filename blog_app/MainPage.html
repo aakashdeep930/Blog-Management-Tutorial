@@ -258,7 +258,8 @@
                                                 "name": fileCompleteName,
                                                 "desc": desc,
                                                 "uid": user.uid,
-                                                "name": userName,
+                                                "counter": counter,
+                                                "userName": userName,
                                                 "time": time.toLocaleString('en-US',{hour: 'numeric', minute: 'numeric', hour12: true}),
                                                 "date": time.toLocaleDateString('en-US',options),
                                             }; 
@@ -279,6 +280,7 @@
 
                                                     window.open("","_self");
                                                 }
+                                                resetForm();
                                              });
 
                                          });
@@ -299,6 +301,72 @@
                           $("#upload-progress").html("Completed");
                       }
                  
+                      //*********Retrieve and Display Data from Firebase
+
+                      var firebaseConfig = {
+                        apiKey: "AIzaSyA3NIph_WgKlXUEKyHteCINUhzWbhxdXSo",
+                        authDomain: "fir-webapp-a037c.firebaseapp.com",
+                        databaseURL: "https://fir-webapp-a037c.firebaseio.com",
+                        projectId: "fir-webapp-a037c",
+                        storageBucket: "fir-webapp-a037c.appspot.com",
+                        messagingSenderId: "945227812412",
+                        appId: "1:945227812412:web:e5676319f69d98315f3d39",
+                        measurementId: "G-B08N7DVV6J"
+                        };
+                        // Initialize Firebase
+                        firebase.initializeApp(firebaseConfig);
+                        //firebase.analytics();
+
+                        //Persistence Log In
+                        firebase.auth.Auth.Persistence.LOCAL;
+
+                      
+                      
+                      var dbBlogs = firebase.database().ref().child("Blogs").orderByChild("counter");
+                       
+                       dbBlogs.on("value", function(blogs)
+                       {
+                          if(blogs.exists())
+                          {
+                              var blogsHtml = "";
+
+                              blogs.forEach(function(singleBlog)
+                              {
+                                  counter = counter + 1;
+
+                               blogsHtml += "<div class='jumbotron bg-light text-dark border border-dark'>";
+                                    blogsHtml += "<div><img width ='1000px' height='550px' src='";
+                                        blogsHtml += singleBlog.val().image;
+                                  blogsHtml += "'/> </div><br>";
+
+                                  blogsHtml += "<div class='row'>";
+                                    blogsHtml += "<div class='col-sm-5'><p style='color:grey;'>"
+                                                  + "Published by: " + singleBlog.val().userName
+                                                  + "</p> </div>" +
+
+                                                  "<div class='col-sm-3'><p style='color:grey;'>"
+                                                  + "Time: " + singleBlog.val().time
+                                                  + "</p> </div>" +
+
+                                                  "<div class='col-sm-4'><p style='color:grey; margin-left: 75px;'>"
+                                                  + "Date: " + singleBlog.val().date
+                                                  + "</p> </div>"
+
+                                                  ;
+                                    blogsHtml += "</div> <br>";
+                                        
+                                    blogsHtml += "<div style='text-align: justify; color:black;'>";
+                                         blogsHtml += singleBlog.val().desc;
+                                    blogsHtml += "</div> <br>";
+
+                               blogsHtml += "</div>";     
+                              });
+
+                              $("#blogs").html(blogsHtml);
+                          }
+                       });
+                      //********Retrieve and Display Data from FireBase ends Here 
+
                  </script>
 
                   <!-- Validation and uploading of Post Blog Ends Here-->
