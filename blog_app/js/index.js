@@ -168,7 +168,18 @@ $("#btn-update").click(function()
   }
   else
   {
-      window.alert("Form is incomplete. Please fill out   fields"); 
+      window.alert("Form is incomplete. Please fill out all fields"); 
   }
 });
 
+function switchView(view)
+{
+  $.get({
+    url: view,
+    cache: false,
+  })
+  .then(function(data)
+  {
+     $("#container").html(data);
+  });
+}
