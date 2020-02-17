@@ -7,6 +7,10 @@
     </script>
      <div class="container text-center">
          <form id="main-form">
+            <div class="form-group">
+                <span class="w3-opacity" style="font-family: 'Comic Sans MS', cursive, sans-serif; ">   <h2>Add Blog</h2></span>
+             </div>
+          <div class="form-group">
              <div class="form-group">
                  <textarea type="text" rows="5" placeholder="Description..." class="form-control" id="main-desc"></textarea>
                  <div class="invalid-feedback">
@@ -244,7 +248,7 @@
                   counter = counter + 1;
 
                blogsHtml += "<div class='jumbotron bg-light text-dark border border-dark'>";
-                    blogsHtml += "<div><img width ='1000px' height='550px' src='";
+                    blogsHtml += "<div><img width ='950px' height='550px' src='";
                         blogsHtml += singleBlog.val().image;
                   blogsHtml += "'/> </div><br>";
 
@@ -257,7 +261,7 @@
                                   + "Time: " + singleBlog.val().time
                                   + "</p> </div>" +
 
-                                  "<div class='col-sm-4'><p style='color:grey; margin-left: 75px;'>"
+                                  "<div class='col-sm-4'><p style='color:grey; margin-left: 60px;'>"
                                   + "Date: " + singleBlog.val().date
                                   + "</p> </div>"
 
